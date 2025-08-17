@@ -1,2 +1,2 @@
 # Rithmetic
-A hobbyist's exploration of mathematical curiosities.
+A hobbyist's exploration of mathematical curiosities using R.
