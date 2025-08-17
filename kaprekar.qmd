@@ -21,7 +21,7 @@ Let's begin by loading the necessary packages. We could simply call `library(pac
 ```{r}
 #| results: false
 # Define required packages
-pkg_req <- c("ggplot2", "knitr")
+pkg_req <- c("ggplot2", "knitr", "rmarkdown", "yaml")
 # Check if required packages are not installed
 pkg_new <- pkg_req[!(pkg_req %in% installed.packages()[,"Package"])]
 # Install them if so
