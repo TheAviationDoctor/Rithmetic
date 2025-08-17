@@ -1,0 +1,115 @@
+---
+meta:
+  title: "Kaprekar's constant"
+  author: "Thomas D. Pellegrin"
+  date: 2025-08-17
+format:
+  gfm:
+    md_extensions: +tex_math_dollars +tex_math_single_backslash +raw_tex -fenced_divs -native_divs -bracketed_spans
+    wrap: none
+    preserve-tabs: true
+execute:
+  echo: true
+  output: true
+  warning: false
+  error: false
+---
+## Exploring Kaprekar's constant with R
+
+Let's begin by loading the necessary packages. We could simply call `library(package)` but this extra code will ensure each package gets installed first if necessary.
+
+```{r}
+#| results: false
+# Define required packages
+pkg_req <- c("ggplot2", "knitr")
+# Check if required packages are not installed
+pkg_new <- pkg_req[!(pkg_req %in% installed.packages()[,"Package"])]
+# Install them if so
+if(length(pkg_new)) install.packages(pkg_new)
+# Load required packages
+lapply(pkg_req, library, character.only = TRUE)
+```
+
+Let's define a function that applies Kaprekar's routine once to an input value $n$. I could have used the `sprintf` function to pad $n$ with leading zeros where necessary, but that would have required a type conversion to `character` and then back to `integer` again. I prefer to use integer division and modulo operations to split the digits of $n$ directly into a vector of four `integer` elements.
+
+```{r}
+k_step <- function(n) {
+  # Check that n is a positive integer smaller than 10^4
+  stopifnot(n >= 1, n <= 9999, n == floor(n))
+  # Split the digits of n and pad them with leading zeros if necessary
+  digits <- n %/% 10^(3:0) %% 10
+  # Sort digits in descending order to form the largest possible number
+  dig_hi <- sort(digits, decreasing = TRUE)
+  # Sort digits in ascending order to form the smallest possible number
+  dig_lo <- sort(digits, decreasing = FALSE)
+  # Return the difference between those two numbers
+  sum(dig_hi * 10^(3:0) - dig_lo * 10^(3:0))
+}
+```
+
+We also need a function to check if all digits of $n$ are identical, as such numbers do not converge to Kaprekar's constant and will need special treatment.
+
+```{r}
+k_check <- function(n) {
+  # Split the digits of n and pad them with leading zeros if necessary
+  digits <- n %/% 10^(3:0) %% 10
+  # Return TRUE if all digits are the same
+  all(digits == digits[1])
+}
+```
+
+We can now define a function that counts iterations needed to reach Kaprekar's constant from a given input number $n$. Note that I use R's `L` shorthand notation to ensure that the iteration count `i` is stored as an integer and not a double.
+
+```{r}
+k_iter <- function(n, target = k_c) {
+  # Check if n has all identical digits, return NA if so
+  if (k_check(n)) return(NA_integer_)
+  # Initialize iteration count
+  i <- 0L
+  # Apply Kaprekar's routine until we reach the constant
+  while(n != 6174) {
+    n <- k_step(n)
+    i <- i + 1L
+  }
+  # Return the number of iterations
+  i
+}
+```
+
+With our functions defined, we can now compute the count of iterations for all values of $n$ less than 10^4. The results are stored in a dataframe with two columns: `n` (padded with leading zeros) and `i` (the number of iterations needed to reach Kaprekar's constant).
+
+```{r}
+# Define the range of n values as a vector
+n_range <- 1:9999
+# Apply the k_iter function to the range vector
+i <- vapply(n_range, k_iter, integer(1))
+# Write the results to a dataframe
+df <- data.frame(n = sprintf("%04d", n_range), i = i)
+```
+
+Let's show how many values of $n$ converge to Kaprekar's constant for every possible iteration count. We see that only one value needs zero iteration (Kaprekar's constant itself). The mode (the most frequent count of iterations) is 3, and the maximum number of iterations needed is 7.
+
+```{r}
+df_summary <- as.data.frame(table(df[[2]], useNA = "ifany"))
+names(df_summary) <- c("Iterations", "Count of n")
+knitr::kable(df_summary, format = "pipe")
+```
+
+Note also the nine `NA` values which correspond to numbers that do not converge. We can confirm that they are those with repeating digits as follows.
+
+```{r}
+cat(df$n[is.na(df$iters)])
+```
+
+Let's also plot this distribution of iterations required for convergence on a bar chart.
+
+```{r}
+ggplot(na.omit(df), aes(x = factor(i))) +
+  geom_bar() +
+  labs(
+    title = "Distribution of iteration counts",
+    x = "Iterations to 6174",
+    y = "Count of n"
+  ) +
+  theme_minimal(base_size = 12)
+```
