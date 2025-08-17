@@ -2,3 +2,7 @@
 .Rhistory
 .RData
 .Ruserdata
+*.lock
+*.Rproj
+*.md
+renv/
