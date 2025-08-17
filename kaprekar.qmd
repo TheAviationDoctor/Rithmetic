@@ -98,7 +98,7 @@ knitr::kable(df_summary, format = "pipe")
 Note also the nine `NA` values which correspond to numbers that do not converge. We can confirm that they are those with repeating digits as follows.
 
 ```{r}
-cat(df$n[is.na(df$iters)])
+cat(df$n[is.na(df$i)])
 ```
 
 Let's also plot this distribution of iterations required for convergence on a bar chart.
